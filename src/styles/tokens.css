@@ -1,0 +1,47 @@
+/* Design tokens. Declared once, consumed by Tailwind (@theme in globals.css)
+   and by the hand-written section CSS. */
+@font-face { font-family: "Big Shoulders"; src: url("/fonts/big-shoulders-bold.woff") format("woff"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url("/fonts/instrument-sans-regular.woff") format("woff"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url("/fonts/instrument-sans-bold.woff") format("woff"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Instrument Serif"; src: url("/fonts/instrument-serif-italic.woff") format("woff"); font-weight: 400; font-style: italic; font-display: swap; }
+
+:root {
+  --peach: #f2caa7;
+  --peach-deep: #ecbd97;
+  --peach-ghost: #ebba95;
+  --cream: #fff3e6;
+  --roast: #3b1a12;
+  --roast-soft: #74463a;
+  --wine: #7b2335;
+  --wine-deep: #5e1726;
+  --line: rgb(59 26 18 / 0.16);
+
+  --ff-display: "Big Shoulders", "Arial Narrow", sans-serif;
+  --ff-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --ff-serif: "Instrument Serif", Georgia, serif;
+
+  --e-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --e-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* native CSS spring (stiffness ~170, damping ~14) */
+  --e-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 19.4%, 1.067, 1.089 24.1%, 1.085 25.9%, 1.058 30.1%, 1.004 36.7%, 0.991 40.6%, 0.99 44%, 1 51.6%, 1.003 58.1%, 1);
+
+  --gutter: clamp(1.25rem, 4.2vw, 4.5rem);
+}
+
+html { scrollbar-gutter: stable; background: var(--peach); color: var(--roast); -webkit-font-smoothing: antialiased; }
+body { margin: 0; font-family: var(--ff-sans); }
+/* a dialog is open: the page keeps its place, the dialog swallows the wheel */
+html.is-modal { scroll-behavior: auto; }
+*, *::before, *::after { box-sizing: border-box; }
+::selection { background: var(--wine); color: var(--cream); }
+
+/* paper grain over everything, one fixed layer */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}

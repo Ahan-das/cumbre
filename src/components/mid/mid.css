@@ -1,0 +1,276 @@
+/* ---------------------------------------------------------------------------
+   Flavour wheel. Every colour reads the --m-* variables that midEngine.ts
+   blends per frame, so the whole stage re-tints with the drink in front.
+--------------------------------------------------------------------------- */
+
+.mid {
+  --m-bg: #e9cdb6;
+  --m-soft: #f6e7da;
+  --m-deep: #7a3f22;
+  --m-ink: #3b1a12;
+  --sheet-r: clamp(1.5rem, 3vw, 3rem);
+  position: relative;
+  z-index: 2;
+  height: 340svh;
+  /* slides up over the end of the hero like a sheet */
+  margin-top: -10svh;
+  border-radius: var(--sheet-r) var(--sheet-r) 0 0;
+  overflow: clip; /* rounds the stage while it slides in; clip keeps sticky working */
+  background: var(--m-bg);
+  box-shadow: 0 -24px 60px -30px rgb(59 26 18 / 0.35);
+}
+
+.mid__stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 600px;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--m-bg);
+  color: var(--m-ink);
+}
+
+/* soft top edge so the hero's peach hands over without a hard seam */
+.mid__stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22vh;
+  z-index: 0;
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--m-deep) 10%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* ---- giant word ---- */
+.mid__word {
+  position: absolute;
+  z-index: 2; /* over the circles, under the drinks */
+  left: calc(var(--gutter) - 0.04em);
+  top: clamp(4.5rem, 10vh, 7rem);
+  margin: 0;
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: clamp(6rem, 15.5vw, 17rem);
+  line-height: 0.8;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--m-deep);
+  pointer-events: none;
+}
+.mid__word-inner { display: block; overflow: clip; padding: 0.02em 0.04em 0.06em; }
+.mid__word-inner span { display: inline-block; }
+
+/* ---- wheel ---- */
+.mid__ring,
+.mid__glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+}
+.mid__ring svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mid__ring circle.track {
+  fill: none;
+  stroke: var(--m-ink);
+  stroke-opacity: 0.3;
+  stroke-width: 1;
+  stroke-dasharray: 1.2 1.6;
+  vector-effect: non-scaling-stroke;
+}
+.mid__ring circle.dot { fill: var(--m-deep); }
+
+.mid__glow {
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, var(--m-soft) 0%, color-mix(in oklab, var(--m-soft) 70%, transparent) 55%, transparent 100%);
+}
+
+/* ---- three circles behind the drink ---- */
+.mid__orb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+.mid__orb--disc {
+  background:
+    radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--m-soft) 100%, white 25%), var(--m-soft) 45%, color-mix(in oklab, var(--m-soft) 70%, var(--m-bg)) 100%);
+  box-shadow: inset 0 -2vh 5vh color-mix(in oklab, var(--m-deep) 10%, transparent);
+}
+.mid__orb--solid {
+  background: radial-gradient(circle at 30% 28%, color-mix(in oklab, var(--m-deep) 70%, white), var(--m-deep) 55%, color-mix(in oklab, var(--m-deep) 80%, black));
+  box-shadow: 0 2.5vh 5vh -2vh color-mix(in oklab, var(--m-deep) 60%, transparent);
+}
+/* paper grain on the solid orb so it reads printed, not flat vector */
+.mid__orb--solid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.mid__orb--ring svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mid__orb--ring circle { fill: none; stroke: var(--m-deep); vector-effect: non-scaling-stroke; }
+.mid__orb--ring .r1 { stroke-width: 1.5; stroke-dasharray: 0.1 3.2; stroke-linecap: round; stroke-opacity: 0.8; }
+.mid__orb--ring .r2 { stroke-width: 1; stroke-opacity: 0.35; }
+
+.mid__drinks {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  perspective: 1400px;
+}
+.mid__drink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: auto;
+  aspect-ratio: var(--ar);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 2.4vh 2.4vh color-mix(in oklab, var(--m-ink) 30%, transparent));
+}
+.mid__drink img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+
+/* ---- copy ---- */
+.mid__copy {
+  position: absolute;
+  z-index: 4;
+  left: var(--gutter);
+  top: 47%;
+  width: min(25rem, 34vw);
+}
+.mid__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.mid__eyebrow i { width: 1.8rem; height: 1px; background: currentColor; }
+.mid__swap { display: grid; }
+.mid__swap > * { grid-area: 1 / 1; }
+.mid__name {
+  margin: 0;
+  font-family: var(--ff-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 3.4vw, 3.3rem);
+  line-height: 1;
+}
+.mid__line {
+  margin: 0.9rem 0 0;
+  font-size: clamp(0.95rem, 1.02vw, 1.05rem);
+  line-height: 1.6;
+  opacity: 0.82;
+  text-wrap: pretty;
+}
+.mid__buy {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 1.6rem;
+}
+.mid__price {
+  font-family: var(--ff-display);
+  font-size: 2.3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.mid .btn--flavour {
+  background: var(--m-deep);
+  color: #fff;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.2) inset, 0 14px 26px -14px color-mix(in oklab, var(--m-deep) 90%, black);
+}
+.mid .btn--flavour:hover { background: color-mix(in oklab, var(--m-deep) 82%, black); }
+.mid .btn--flavour .btn__dot { color: var(--m-deep); }
+.mid .btn:focus-visible { outline-color: var(--m-ink); }
+
+/* ---- flavour cards ---- */
+.mid__cards {
+  position: absolute;
+  z-index: 4;
+  left: var(--gutter);
+  bottom: clamp(1.25rem, 4vh, 2.5rem);
+  display: flex;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mid__card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.6rem auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.9rem 0.45rem 0.45rem;
+  border: 0;
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--m-soft) 55%, transparent);
+  color: var(--m-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s var(--e-out), transform 0.35s var(--e-spring);
+}
+.mid__card:hover { transform: translateY(-3px); }
+.mid__card:focus-visible { outline: 2px solid var(--m-ink); outline-offset: 2px; }
+.mid__card-active {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--m-soft);
+  box-shadow: 0 0 0 1.5px var(--m-deep) inset, 0 12px 24px -16px color-mix(in oklab, var(--m-ink) 60%, transparent);
+  z-index: 0;
+}
+.mid__card > :not(.mid__card-active) { position: relative; z-index: 1; }
+.mid__card img { width: 2.6rem; height: 3.1rem; object-fit: contain; }
+.mid__card b {
+  display: block;
+  font-family: var(--ff-display);
+  font-size: 1.15rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.mid__card small { font-size: 0.78rem; opacity: 0.75; font-variant-numeric: tabular-nums; }
+
+/* ---- tablet ---- */
+@media (max-width: 1024px) {
+  .mid__copy { width: min(22rem, 40vw); }
+  .mid__card { grid-template-columns: 2.6rem; padding-right: 0.45rem; }
+  .mid__card > div { display: none; }
+}
+
+/* ---- phone ---- */
+@media (max-width: 720px) {
+  .mid { height: 300svh; }
+  .mid__stage { touch-action: pan-y; }
+  .mid__word { top: 5.5rem; font-size: 19vw; }
+  .mid__copy { top: calc(5.5rem + 19vw); width: auto; right: var(--gutter); }
+  .mid__eyebrow { display: none; }
+  .mid__name { font-size: 2rem; }
+  .mid__line { font-size: 0.9rem; margin-top: 0.5rem; }
+  .mid__buy { margin-top: 0.9rem; }
+  .mid__price { font-size: 1.8rem; }
+  .mid__cards { left: 50%; translate: -50% 0; gap: 0.4rem; }
+  .mid__card { padding: 0.3rem; border-radius: 0.8rem; }
+  .mid__card img { width: 2.2rem; height: 2.6rem; }
+}
+
+@media (max-height: 720px) and (min-width: 721px) {
+  .mid__line { display: none; }
+}

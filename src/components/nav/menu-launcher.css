@@ -1,0 +1,184 @@
+/* The header menu button and its search panel. */
+
+.menu-fab {
+  position: fixed;
+  z-index: 40;
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  right: var(--gutter);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  height: 2.9rem;
+  padding: 0 1.2rem 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--roast);
+  color: var(--cream);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 14px 28px -16px rgb(59 26 18 / 0.9);
+  will-change: transform, opacity;
+}
+.menu-fab:hover { background: color-mix(in oklab, var(--roast) 85%, black); }
+.menu-fab:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+.menu-fab__bars { display: grid; gap: 3px; }
+.menu-fab__bars i { display: block; width: 1.05rem; height: 1.5px; border-radius: 2px; background: currentColor; }
+
+.menu-scrim[hidden] { display: none; }
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: clamp(1rem, 8vh, 6rem) 1rem 2rem;
+  background: color-mix(in oklab, var(--roast) 55%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.menu-panel {
+  width: min(34rem, 100%);
+  max-height: min(72svh, 40rem);
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+  border-radius: 1.4rem;
+  background: var(--cream);
+  color: var(--roast);
+  box-shadow: 0 40px 80px -40px rgb(59 26 18 / 0.8);
+}
+
+.menu-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 0.85rem 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.menu-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--roast-soft);
+}
+.menu-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--roast);
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 0.4rem 0;
+}
+.menu-search input::placeholder { color: color-mix(in oklab, var(--roast-soft) 75%, transparent); }
+.menu-search input:focus { outline: none; }
+
+.menu-close {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--peach) 60%, var(--cream));
+  color: var(--roast);
+  cursor: pointer;
+}
+.menu-close:hover { background: var(--peach); }
+.menu-close:focus-visible { outline: 2px solid var(--roast); outline-offset: 2px; }
+
+.menu-results {
+  flex: 1;
+  margin: 0;
+  padding: 0.5rem;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.menu-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0.6rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.menu-group__all {
+  border: 0;
+  background: none;
+  color: var(--wine);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.menu-group__all:hover { text-decoration: underline; text-underline-offset: 3px; }
+.menu-group__all:focus-visible { outline: 2px solid var(--roast); outline-offset: 2px; border-radius: 4px; }
+
+.menu-item {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-radius: 0.85rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item.is-cursor { background: color-mix(in oklab, var(--peach) 55%, var(--cream)); }
+.menu-item:focus-visible { outline: 2px solid var(--roast); outline-offset: -2px; }
+.menu-item img { width: 2.4rem; height: 2.8rem; object-fit: contain; }
+.menu-item__name {
+  font-family: var(--ff-display);
+  font-size: 1.3rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.menu-item__price { font-variant-numeric: tabular-nums; color: var(--roast-soft); }
+
+.menu-empty { padding: 1.5rem 0.9rem; color: var(--roast-soft); }
+
+.menu-hint {
+  margin: 0;
+  padding: 0.7rem 1rem 0.9rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--roast-soft);
+}
+.menu-hint kbd {
+  display: inline-block;
+  min-width: 1.4rem;
+  margin-right: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.35rem;
+  background: color-mix(in oklab, var(--peach) 50%, var(--cream));
+  font: inherit;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .menu-fab { right: 1rem; height: 2.6rem; font-size: 0.72rem; }
+  .menu-scrim { padding-top: 1rem; align-content: end; padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+  .menu-panel { max-height: 78svh; }
+  .menu-hint { display: none; }
+}

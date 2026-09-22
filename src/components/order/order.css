@@ -1,0 +1,252 @@
+/* ---------------------------------------------------------------------------
+   The bag: what you added, and the form that turns it into an order.
+--------------------------------------------------------------------------- */
+
+.order {
+  min-height: 100svh;
+  padding: clamp(7rem, 16vh, 11rem) var(--gutter) clamp(4rem, 10vh, 7rem);
+  background: var(--peach);
+  color: var(--roast);
+}
+
+.order__kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.order__kicker i { width: 1.8rem; height: 1px; background: currentColor; }
+
+.order__title {
+  margin: 0 0 clamp(2rem, 5vh, 3rem);
+  font-family: var(--ff-display);
+  font-size: clamp(2.6rem, 7vw, 5.5rem);
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+.order__title span { display: block; }
+.order__title .serif {
+  font-family: var(--ff-serif);
+  font-style: italic;
+  text-transform: none;
+  font-size: 0.72em;
+}
+
+.order__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(19rem, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+}
+
+/* ---- the lines ---- */
+.order__lines { margin: 0; padding: 0; list-style: none; }
+.order__lines > li {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.order__lines img { width: 3.4rem; height: 4rem; object-fit: contain; }
+.line__text b {
+  display: block;
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+.line__text small { color: var(--roast-soft); font-variant-numeric: tabular-nums; }
+
+.line__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--cream) 70%, transparent);
+  box-shadow: 0 0 0 1px var(--line) inset;
+}
+.line__qty button {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.line__qty button:hover { background: var(--cream); }
+.line__qty button:focus-visible { outline: 2px solid var(--roast); outline-offset: 1px; }
+.line__qty span { min-width: 1.4rem; text-align: center; font-variant-numeric: tabular-nums; }
+
+.line__sum { font-family: var(--ff-display); font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.line__remove {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--roast-soft);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.line__remove:hover { background: var(--cream); color: var(--wine); }
+.line__remove:focus-visible { outline: 2px solid var(--roast); outline-offset: 1px; }
+
+.order__clear { border: 0 !important; padding-top: 1rem !important; display: block !important; }
+.order__clear button {
+  border: 0;
+  background: none;
+  color: var(--roast-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---- the form ---- */
+.order__form {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1.4rem;
+  background: var(--cream);
+  box-shadow: 0 30px 60px -40px rgb(59 26 18 / 0.6);
+  position: sticky;
+  top: clamp(5.5rem, 12vh, 8rem);
+}
+.order__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.order__total b {
+  font-family: var(--ff-display);
+  font-size: 2.4rem;
+  letter-spacing: 0;
+  color: var(--roast);
+  font-variant-numeric: tabular-nums;
+}
+
+.field { display: grid; gap: 0.4rem; }
+.field > span,
+.field legend {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.field input[type="text"],
+.field input:not([type]),
+.field input[type="tel"],
+.field textarea {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--peach);
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+}
+.field textarea { resize: vertical; }
+.field input:focus, .field textarea:focus { outline: 2px solid var(--wine); outline-offset: 1px; }
+
+.field--choice { border: 0; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.field--choice label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.98rem; }
+.field--choice input { accent-color: var(--wine); width: 1.05rem; height: 1.05rem; }
+
+.order__error { margin: 0; color: var(--wine); font-size: 0.9rem; }
+.order__place { justify-content: space-between; width: 100%; }
+.order__small { margin: 0; font-size: 0.8rem; color: var(--roast-soft); }
+
+.order__empty { display: grid; gap: 1.5rem; justify-items: start; }
+.order__empty p { margin: 0; font-size: 1.1rem; color: var(--roast-soft); }
+.order__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+/* ---- after placing ---- */
+.order--done .order__lede {
+  max-width: 44ch;
+  margin: 0 0 2rem;
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.6;
+}
+.order--done .order__lede b { font-family: var(--ff-display); font-size: 1.25em; letter-spacing: 0.02em; }
+.order__receipt {
+  max-width: 28rem;
+  margin: 0 0 2.5rem;
+  padding: 1.25rem;
+  list-style: none;
+  border-radius: 1.2rem;
+  background: var(--cream);
+}
+.order__receipt li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.order__receipt-total {
+  margin-top: 0.5rem;
+  padding-top: 0.8rem !important;
+  border-top: 1px solid var(--line);
+  font-family: var(--ff-display);
+  font-size: 1.3rem;
+  text-transform: uppercase;
+}
+
+/* ---- past orders ---- */
+.order__past { margin-top: clamp(3rem, 8vh, 5rem); }
+.order__past h2 {
+  margin: 0 0 1rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.order__past ul { margin: 0; padding: 0; list-style: none; }
+.order__past li {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto auto;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+.order__past b { font-family: var(--ff-display); font-size: 1.05rem; letter-spacing: 0.04em; }
+
+@media (max-width: 900px) {
+  .order__grid { grid-template-columns: 1fr; }
+  .order__form { position: static; }
+}
+@media (max-width: 560px) {
+  .order__lines > li { grid-template-columns: 3rem minmax(0, 1fr) auto; row-gap: 0.5rem; }
+  .line__qty { grid-column: 2; }
+  .line__sum { grid-column: 3; grid-row: 2; }
+  .line__remove { grid-column: 3; grid-row: 1; }
+  .order__past li { grid-template-columns: 6rem 1fr; }
+  .order__past li span:nth-child(2) { grid-column: 1 / -1; color: var(--roast-soft); }
+}

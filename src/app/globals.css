@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Same tokens, exposed to Tailwind utilities: bg-peach, text-wine, font-display ... */
+@theme inline {
+  --color-peach: var(--peach);
+  --color-peach-deep: var(--peach-deep);
+  --color-cream: var(--cream);
+  --color-roast: var(--roast);
+  --color-roast-soft: var(--roast-soft);
+  --color-wine: var(--wine);
+  --color-wine-deep: var(--wine-deep);
+  --font-display: var(--ff-display);
+  --font-sans: var(--ff-sans);
+  --font-serif: var(--ff-serif);
+}

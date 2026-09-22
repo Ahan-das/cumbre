@@ -1,0 +1,234 @@
+/* ---------------------------------------------------------------------------
+   Shared furniture: the Visit block and the footer.
+   (The nav and button styles live in hero.css, which every page loads.)
+--------------------------------------------------------------------------- */
+
+.visit {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  /* no overlap: the section above ends with its picker strip, which must stay visible */
+  margin-top: 0;
+  padding: clamp(5rem, 14vh, 9rem) var(--gutter) clamp(4rem, 10vh, 7rem);
+  border-radius: clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 3vw, 3rem) 0 0;
+  background: var(--peach);
+  color: var(--roast);
+  overflow: clip;
+}
+
+.visit__beans {
+  position: absolute;
+  inset: 0;
+  z-index: 0;          /* always behind the words */
+  pointer-events: none;
+}
+/* everything that carries text sits above the beans */
+.visit__kicker,
+.visit__title,
+.visit__facts,
+.visit__cta { position: relative; z-index: 1; }
+.visit__beans img {
+  position: absolute;
+  width: clamp(48px, 5vw, 86px);
+  opacity: 0.85;
+  filter: drop-shadow(0 8px 10px rgb(59 26 18 / 0.2));
+  animation: visitFloat 9s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -2.2s);
+}
+.visit__beans img:nth-child(1) { top: 14%; right: 12%; rotate: -18deg; }
+.visit__beans img:nth-child(2) { top: 62%; right: 6%; rotate: 32deg; }
+.visit__beans img:nth-child(3) { bottom: 8%; left: 46%; rotate: 68deg; }
+.visit__beans img:nth-child(4) { top: 26%; right: 30%; rotate: -46deg; width: clamp(34px, 3.2vw, 56px); opacity: 0.6; }
+@keyframes visitFloat {
+  from { translate: 0 -6px; }
+  to { translate: 0 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visit__beans img { animation: none; }
+}
+
+.visit__kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.visit__kicker i { width: 1.8rem; height: 1px; background: currentColor; }
+
+.visit__title {
+  margin: 0 0 clamp(2.5rem, 6vh, 4rem);
+  font-family: var(--ff-display);
+  font-size: clamp(3rem, 8vw, 7rem);
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+.visit__title span { display: block; }
+.visit__title .serif {
+  font-family: var(--ff-serif);
+  font-style: italic;
+  text-transform: none;
+  font-size: 0.72em;
+  line-height: 1;
+}
+
+.visit__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 2rem 2.5rem;
+  margin: 0 0 clamp(2.5rem, 6vh, 3.5rem);
+  max-width: 68rem;
+}
+.visit__facts dt {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--roast-soft);
+}
+.visit__facts dd {
+  margin: 0;
+  font-size: clamp(1rem, 1.15vw, 1.2rem);
+  line-height: 1.5;
+}
+.visit__facts a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+.visit__facts a:hover { border-color: currentColor; }
+
+.visit__cta { position: relative; z-index: 1; }
+
+/* ---- footer ---- */
+.foot {
+  position: relative;
+  z-index: 2;
+  padding: clamp(3.5rem, 9vh, 6rem) var(--gutter) clamp(1.5rem, 4vh, 2.5rem);
+  background: var(--roast);
+  color: var(--cream);
+}
+
+.foot__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 2rem;
+  padding-bottom: clamp(2.5rem, 6vh, 4rem);
+  border-bottom: 1px solid rgb(255 243 230 / 0.2);
+}
+.foot__mark {
+  margin: 0;
+  font-family: var(--ff-display);
+  font-size: clamp(3.5rem, 13vw, 11rem);
+  line-height: 0.8;
+  text-transform: uppercase;
+  color: var(--peach);
+}
+.foot__line {
+  margin: 0 0 0.6rem;
+  max-width: 34ch;
+  font-size: clamp(0.95rem, 1.05vw, 1.1rem);
+  line-height: 1.6;
+  opacity: 0.8;
+  text-wrap: pretty;
+}
+
+.foot__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 2.5rem;
+  padding: clamp(2.5rem, 6vh, 3.5rem) 0;
+}
+.foot__cols h2 {
+  margin: 0 0 1rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.foot__cols ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; }
+.foot__cols li { font-size: 0.98rem; line-height: 1.5; opacity: 0.9; }
+.foot__cols a { color: inherit; text-decoration: none; }
+.foot__cols a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.foot__sub p { margin: 0 0 1rem; font-size: 0.95rem; line-height: 1.5; opacity: 0.8; max-width: 26ch; }
+
+.foot__form { display: flex; gap: 0.5rem; }
+.foot__form input {
+  flex: 1;
+  min-width: 0;
+  height: 2.8rem;
+  padding: 0 1rem;
+  border: 1px solid rgb(255 243 230 / 0.3);
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+}
+.foot__form input::placeholder { color: rgb(255 243 230 / 0.5); }
+.foot__form input:focus { outline: none; border-color: var(--peach); }
+.foot__form button {
+  height: 2.8rem;
+  padding: 0 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--peach);
+  color: var(--roast);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.foot__form button:hover { background: var(--cream); }
+
+.foot__legal {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgb(255 243 230 / 0.2);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .foot__top { grid-template-columns: 1fr; }
+  .foot__line { margin-top: 1.5rem; }
+
+  /* the copy runs nearly full width on a phone, so the beans move to the edges */
+  .visit { padding-top: clamp(4rem, 12vh, 7rem); }
+  .visit__beans img { width: clamp(40px, 13vw, 64px); opacity: 0.7; }
+  .visit__beans img:nth-child(1) { top: 3%; right: -4%; rotate: -18deg; }
+  .visit__beans img:nth-child(2) { top: auto; bottom: 1%; right: -5%; rotate: 32deg; }
+  .visit__beans img:nth-child(3) { bottom: 4%; left: -4%; rotate: 68deg; }
+  .visit__beans img:nth-child(4) { display: none; }
+}
+
+/* ---- inner pages: the header sits over the chapter, which starts flush ---- */
+.page { position: relative; }
+.page > .nav {
+  position: absolute;
+  inset: 0 var(--gutter) auto;
+  z-index: 30;
+}
+.page > .mid,
+.page > .chapter {
+  margin-top: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ---- add to order ---- */
+.add-btn { position: relative; }
+.add-btn__label { display: inline-block; min-width: 6.2rem; }
+.add-btn[data-added="true"] { background: var(--roast); }
+
+/* the order pill counts up when something lands in the bag */
+.nav__cart em { transition: transform 0.4s var(--e-spring), background-color 0.3s var(--e-out); }
+.nav__cart[data-full="true"] em { background: var(--wine); color: var(--cream); transform: scale(1.12); }
