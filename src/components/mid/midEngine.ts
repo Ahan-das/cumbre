@@ -6,6 +6,7 @@
  * continuously instead of snapping.
  */
 import { createSnap } from "@/lib/scrollSnap";
+import { setBox, setHidden, setOpacity, setTransform, setZ } from "@/lib/fastStyle";
 import { mixPalettes, type Palette } from "@/lib/palette";
 
 export type MidPalette = Palette;
@@ -49,18 +50,41 @@ export function startMid(
   let current = -1;
   const ptr = { tx: 0, ty: 0, x: 0, y: 0 };
   let W = 1, H = 1, phone = false;
+  let painted = 0;
+
+  /**
+   * Everything that only moves when the window does. Sizes in particular are
+   * written here and never in a frame: setting width or height costs a layout
+   * pass, and on a phone doing that for ten elements sixty times a second is
+   * most of the frame budget.
+   */
+  const g = {
+    cx: 0, cy: 0, R: 0, itemH: 0, glow: 0,
+    orb: [0, 0, 0],
+    orbit: [0, 0, 0],
+  };
 
   const measure = () => {
     const r = stage.getBoundingClientRect();
     W = r.width;
     H = r.height;
     phone = W <= 720;
+    g.cx = W * (phone ? 0.5 : 0.69);
+    g.cy = H * (phone ? 1.12 : 1.22);
+    g.R = H * (phone ? 0.5 : 0.74);
+    g.itemH = H * (phone ? 0.42 : 0.62);
+    g.glow = H * (phone ? 0.46 : 0.66);
+    const sm = phone ? 0.72 : 1;
+    g.orb = [H * 0.78 * sm, H * 0.3 * sm, H * 0.46 * sm];
+    g.orbit = [H * 0.05 * sm, H * 0.27 * sm, H * 0.24 * sm];
+    setBox(ring, g.R * 2, g.R * 2);
+    setBox(glow, g.glow, g.glow);
+    orbs.forEach((el, i) => el && setBox(el, g.orb[i], g.orb[i]));
+    items.forEach((el) => setBox(el, null, g.itemH));
   };
 
   const readScroll = () => {
-    const r = root.getBoundingClientRect();
-    const travel = Math.max(1, r.height - window.innerHeight);
-    progTarget = clamp(-r.top / travel);
+    progTarget = snap.progress();
   };
 
   /** progress -> wheel position with a hold on every flavour */
@@ -74,6 +98,20 @@ export function startMid(
   const frame = (now: number) => {
     raf = 0;
     if (disposed) return;
+    // On a phone at rest the only motion left is the slow ornament drift, which
+    // reads the same at half the rate — and halving it halves the work.
+    if (
+      phone &&
+      !reduced &&
+      now - painted < 32 &&
+      Math.abs(progTarget - prog) < 0.0004 &&
+      Math.abs(ptr.tx - ptr.x) < 0.002 &&
+      Math.abs(ptr.ty - ptr.y) < 0.002
+    ) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    painted = now;
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     const t = (now - t0) / 1000;
@@ -92,39 +130,35 @@ export function startMid(
       opts.onIndex(idx);
     }
 
-    // ---- wheel geometry (px) ----
-    const cx = W * (phone ? 0.5 : 0.69);
-    const cy = H * (phone ? 1.12 : 1.22);
-    const R = H * (phone ? 0.5 : 0.74);
-    const itemH = H * (phone ? 0.42 : 0.62);
+    // ---- wheel geometry (px, measured on resize) ----
+    const { cx, cy, R, glow: gs } = g;
 
-    ring.style.width = ring.style.height = `${R * 2}px`;
-    ring.style.transform = `translate3d(${(cx - R).toFixed(1)}px, ${(cy - R).toFixed(1)}px, 0) rotate(${(-pos * WHEEL_STEP).toFixed(3)}deg)`;
-    const gs = H * (phone ? 0.46 : 0.66);
-    glow.style.width = glow.style.height = `${gs}px`;
-    glow.style.transform = `translate3d(${(cx - gs / 2 + ptr.x * 10).toFixed(1)}px, ${(cy - R - gs / 2 + ptr.y * 8).toFixed(1)}px, 0) scale(${(1 + Math.sin(t * 0.8) * (reduced ? 0 : 0.015)).toFixed(4)})`;
+    setTransform(ring, `translate3d(${(cx - R).toFixed(1)}px, ${(cy - R).toFixed(1)}px, 0) rotate(${(-pos * WHEEL_STEP).toFixed(3)}deg)`);
+    setTransform(
+      glow,
+      `translate3d(${(cx - gs / 2 + ptr.x * 10).toFixed(1)}px, ${(cy - R - gs / 2 + ptr.y * 8).toFixed(1)}px, 0) scale(${(1 + Math.sin(t * 0.8) * (reduced ? 0 : 0.015)).toFixed(4)})`,
+    );
 
     // ---- the three circles behind the drink ----
     // each rides its own orbit around the resting drink, driven by the same wheel position,
     // and breathes up between flavours so a change reads as a pulse
     const ax = cx, ay = cy - R; // resting drink centre
     const between = Math.sin((pos - Math.floor(pos)) * Math.PI); // 0 at rest, 1 mid-roll
-    const unit = H;
-    const orb = (el: HTMLElement | undefined, size: number, orbit: number, angleDeg: number, scale: number, spin = 0) => {
+    const orb = (el: HTMLElement | undefined, i: number, angleDeg: number, scale: number, spin = 0) => {
       if (!el) return;
+      const size = g.orb[i];
+      const orbit = g.orbit[i];
       const a = (angleDeg * Math.PI) / 180;
       const px = ax + Math.cos(a) * orbit - size / 2 + ptr.x * orbit * 0.06;
       const py = ay + Math.sin(a) * orbit - size / 2 + ptr.y * orbit * 0.05;
-      el.style.width = el.style.height = `${size.toFixed(1)}px`;
-      el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) rotate(${spin.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
+      setTransform(el, `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) rotate(${spin.toFixed(2)}deg) scale(${scale.toFixed(4)})`);
     };
-    const sm = phone ? 0.72 : 1;
     // A: the big pale disc, drifting slightly left and up
-    orb(orbs[0], unit * 0.78 * sm, unit * 0.05 * sm, 200 - pos * 25, 1 + between * 0.06);
+    orb(orbs[0], 0, 200 - pos * 25, 1 + between * 0.06);
     // B: the solid colour orb, swinging round the lower side of the cup
-    orb(orbs[1], unit * 0.3 * sm, unit * 0.27 * sm, 35 + pos * 55 + (reduced ? 0 : Math.sin(t * 0.5) * 4), 1 - between * 0.25);
+    orb(orbs[1], 1, 35 + pos * 55 + (reduced ? 0 : Math.sin(t * 0.5) * 4), 1 - between * 0.25);
     // C: the dotted ring, offset the other way and turning with the wheel
-    orb(orbs[2], unit * 0.46 * sm, unit * 0.24 * sm, 215 + pos * 40, 1 + between * 0.12, pos * 90 + (reduced ? 0 : t * 6));
+    orb(orbs[2], 2, 215 + pos * 40, 1 + between * 0.12, pos * 90 + (reduced ? 0 : t * 6));
 
     for (let n = 0; n < N; n++) {
       const el = items[n];
@@ -139,14 +173,15 @@ export function startMid(
       const tiltY = ptr.x * 14 * front;
       const tiltX = -ptr.y * 8 * front;
       const bob = reduced ? 0 : Math.sin(t * 1.3 + n) * 4 * front;
-      el.style.height = `${itemH.toFixed(1)}px`;
-      el.style.transform =
+      setTransform(
+        el,
         `translate3d(${x.toFixed(1)}px, ${(y + bob).toFixed(1)}px, 0) translate(-50%, -50%) ` +
-        `rotate(${lean.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) rotateX(${tiltX.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
+          `rotate(${lean.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) rotateX(${tiltX.toFixed(2)}deg) scale(${scale.toFixed(4)})`,
+      );
       // drinks that have rolled past leave quickly so they never sit under the copy
-      el.style.opacity = (d < 0 ? 1 - smooth(phone ? 0.3 : 0.4, phone ? 0.8 : 1, ad) : 1 - smooth(1.6, 2.4, ad)).toFixed(3);
-      el.style.zIndex = String(10 - Math.round(ad * 2));
-      el.setAttribute("aria-hidden", ad > 0.5 ? "true" : "false");
+      setOpacity(el, d < 0 ? 1 - smooth(phone ? 0.3 : 0.4, phone ? 0.8 : 1, ad) : 1 - smooth(1.6, 2.4, ad));
+      setZ(el, 10 - Math.round(ad * 2));
+      setHidden(el, ad > 0.5);
     }
 
     if (visible && !reduced) raf = requestAnimationFrame(frame);

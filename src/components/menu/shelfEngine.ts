@@ -4,6 +4,7 @@
  * at a time. A sheen crosses the glass as a new arch settles.
  */
 import { createSnap, type Snap } from "@/lib/scrollSnap";
+import { setBox, setHidden, setOpacity, setTransform, setZ } from "@/lib/fastStyle";
 import { mixPalettes, type Palette } from "@/lib/palette";
 
 export type ShelfRefs = {
@@ -42,20 +43,41 @@ export function startShelf(
   const ptr = { tx: 0, ty: 0, x: 0, y: 0 };
   let W = 1, H = 1, phone = false;
 
+  let painted = 0;
+  // resize-time geometry; a frame only ever writes transforms and opacity
+  const g = { pitch: 0, cx: 0, cy: 0, archH: 0 };
+
   const measure = () => {
     const r = stage.getBoundingClientRect();
     W = r.width;
     H = r.height;
     phone = W <= 720;
+    g.pitch = H * (phone ? 0.62 : 0.78); // distance between shelves
+    g.cx = W * (phone ? 0.5 : 0.7);
+    g.cy = H * (phone ? 0.58 : 0.5);
+    g.archH = H * (phone ? 0.46 : 0.66);
+    arches.forEach((el) => setBox(el, null, g.archH));
   };
   const readScroll = () => {
-    const r = root.getBoundingClientRect();
-    progTarget = clamp(-r.top / Math.max(1, r.height - window.innerHeight));
+    progTarget = snap.progress();
   };
 
   const frame = (now: number) => {
     raf = 0;
     if (disposed) return;
+    // resting on a phone: the crumb drift reads the same at half the rate
+    if (
+      phone &&
+      !reduced &&
+      now - painted < 32 &&
+      Math.abs(progTarget - prog) < 0.0004 &&
+      Math.abs(ptr.tx - ptr.x) < 0.002 &&
+      Math.abs(ptr.ty - ptr.y) < 0.002
+    ) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    painted = now;
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     const t = (now - t0) / 1000;
@@ -74,17 +96,14 @@ export function startShelf(
 
     const frac = pos - Math.floor(pos);
     const between = Math.sin(frac * Math.PI);
-    const pitch = H * (phone ? 0.62 : 0.78); // distance between shelves
-    const cx = W * (phone ? 0.5 : 0.7);
-    const cy = H * (phone ? 0.58 : 0.5);
-    const archH = H * (phone ? 0.46 : 0.66);
+    const { pitch, cx, cy } = g;
 
     // the case itself leans with the pointer, which sells the glass
-    case_.style.transform = `rotateY(${(ptr.x * 4).toFixed(2)}deg) rotateX(${(-ptr.y * 2.5).toFixed(2)}deg)`;
+    setTransform(case_, `rotateY(${(ptr.x * 4).toFixed(2)}deg) rotateX(${(-ptr.y * 2.5).toFixed(2)}deg)`);
 
     // a sheen sweeps the glass as each arch arrives
-    sheen.style.opacity = (between * 0.55).toFixed(3);
-    sheen.style.transform = `translate3d(${((frac - 0.5) * W * 0.9).toFixed(1)}px, 0, 0) rotate(14deg)`;
+    setOpacity(sheen, between * 0.55);
+    setTransform(sheen, `translate3d(${((frac - 0.5) * W * 0.9).toFixed(1)}px, 0, 0) rotate(14deg)`);
 
     for (let n = 0; n < N; n++) {
       const el = arches[n];
@@ -93,12 +112,13 @@ export function startShelf(
       const y = cy + d * pitch;
       const scale = 1 - Math.min(ad, 2) * 0.22;
       const op = 1 - smooth(0.85, 1.8, ad);
-      el.style.height = `${archH.toFixed(1)}px`;
-      el.style.transform =
-        `translate3d(${(cx + ptr.x * 10 * clamp(1 - ad)).toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(4)})`;
-      el.style.opacity = op.toFixed(3);
-      el.style.zIndex = String(10 - Math.round(ad * 2));
-      el.setAttribute("aria-hidden", ad > 0.5 ? "true" : "false");
+      setTransform(
+        el,
+        `translate3d(${(cx + ptr.x * 10 * clamp(1 - ad)).toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(4)})`,
+      );
+      setOpacity(el, op);
+      setZ(el, 10 - Math.round(ad * 2));
+      setHidden(el, ad > 0.5);
     }
 
     // crumbs settle downward and hop a little on each change
@@ -106,7 +126,7 @@ export function startShelf(
       const ph = i * 1.3;
       const dx = (reduced ? 0 : Math.sin(t * 0.4 + ph) * 6) + ptr.x * (6 + (i % 4) * 4);
       const dy = (reduced ? 0 : Math.abs(Math.sin(t * 0.8 + ph)) * -5) - between * 10;
-      c.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${(i * 53 + (reduced ? 0 : t * 5)).toFixed(1)}deg)`;
+      setTransform(c, `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${(i * 53 + (reduced ? 0 : t * 5)).toFixed(1)}deg)`);
     });
 
     if (visible && !reduced) raf = requestAnimationFrame(frame);

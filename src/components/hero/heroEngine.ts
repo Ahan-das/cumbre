@@ -11,6 +11,7 @@
  * Pauses when the hero is off-screen or the tab is hidden.
  */
 import { CupRenderer, type CupPose } from "@/lib/webgl/cupRenderer";
+import { setOpacity, setTransform, setVisible } from "@/lib/fastStyle";
 
 export type HeroRefs = {
   root: HTMLElement;
@@ -75,6 +76,7 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
   let prog = 0;
   let progTarget = 0;
   let W = 1, H = 1, isPhone = false;
+  let painted = 0;
   const fine = window.matchMedia("(pointer: fine)").matches;
 
   const measure = () => {
@@ -91,7 +93,7 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
       b.cy = br.top - r.top + br.height / 2;
       b.el.style.transform = prev;
     }
-    renderer?.resize(isPhone ? 2 : 1.75);
+    renderer?.resize(isPhone ? 1.35 : 1.75);
   };
 
   const readScroll = () => {
@@ -141,6 +143,21 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
   const frame = (now: number) => {
     raf = 0;
     if (disposed) return;
+    // Nothing being scrolled or pointed at on a phone: the floating beans and
+    // the cup's idle turn read the same at half the rate, and the cup is the
+    // most expensive thing on the page to draw.
+    if (
+      isPhone &&
+      !reduced &&
+      now - painted < 32 &&
+      Math.abs(progTarget - prog) < 0.0004 &&
+      Math.abs(ptr.tx - ptr.x) < 0.002 &&
+      Math.abs(ptr.ty - ptr.y) < 0.002
+    ) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    painted = now;
     const t = (now - t0) / 1000;
     // real frame time, so easing feels the same at 30, 60 or 120 Hz
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
@@ -156,16 +173,16 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
 
     // ---- DOM planes ----
     const exit = isPhone ? smooth(0.02, 0.35, p) : smooth(0.05, 0.6, p);
-    word.style.transform = `translate3d(${(-p * 22 - mx * 0.8).toFixed(3)}vw, ${(-my * 6 + p * 40).toFixed(2)}px, 0)`;
-    disc.style.transform = `translate3d(${(mx * -10).toFixed(2)}px, ${(my * -8 - p * 30).toFixed(2)}px, 0) scale(${(1 + p * 0.5).toFixed(4)})`;
-    copy.style.transform = `translate3d(${(mx * 6).toFixed(2)}px, ${(-exit * (isPhone ? 36 : 90) + my * 4).toFixed(2)}px, 0)`;
-    copy.style.opacity = (1 - exit).toFixed(3);
-    copy.style.visibility = exit > 0.99 ? "hidden" : "visible";
+    setTransform(word, `translate3d(${(-p * 22 - mx * 0.8).toFixed(3)}vw, ${(-my * 6 + p * 40).toFixed(2)}px, 0)`);
+    setTransform(disc, `translate3d(${(mx * -10).toFixed(2)}px, ${(my * -8 - p * 30).toFixed(2)}px, 0) scale(${(1 + p * 0.5).toFixed(4)})`);
+    setTransform(copy, `translate3d(${(mx * 6).toFixed(2)}px, ${(-exit * (isPhone ? 36 : 90) + my * 4).toFixed(2)}px, 0)`);
+    setOpacity(copy, 1 - exit);
+    setVisible(copy, exit <= 0.99);
     if (aside) {
-      aside.style.transform = `translate3d(${(mx * 8 + exit * 60).toFixed(2)}px, ${(my * 4).toFixed(2)}px, 0)`;
-      aside.style.opacity = (1 - exit).toFixed(3);
+      setTransform(aside, `translate3d(${(mx * 8 + exit * 60).toFixed(2)}px, ${(my * 4).toFixed(2)}px, 0)`);
+      setOpacity(aside, 1 - exit);
     }
-    if (meta) meta.style.opacity = (1 - exit).toFixed(3);
+    if (meta) setOpacity(meta, 1 - exit);
 
     // ---- cup ----
     const since = loadedAt < 0 ? -1 : (now - loadedAt) / 1000;
@@ -189,8 +206,8 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
       const air = clamp(lift);
       const w = renderer.base.r * 2.9 * (1 - air * 0.45);
       const h = w * 0.16;
-      shadow.style.opacity = (pose.fade * (1 - clamp(air * 2.2)) * (1 - smooth(0, 0.7, p))).toFixed(3);
-      shadow.style.transform = `translate3d(${(renderer.base.x - w / 2).toFixed(1)}px, ${(renderer.base.y - h * 0.35 + air * 40).toFixed(1)}px, 0) scale(${w.toFixed(1)}, ${h.toFixed(1)})`;
+      setOpacity(shadow, pose.fade * (1 - clamp(air * 2.2)) * (1 - smooth(0, 0.7, p)));
+      setTransform(shadow, `translate3d(${(renderer.base.x - w / 2).toFixed(1)}px, ${(renderer.base.y - h * 0.35 + air * 40).toFixed(1)}px, 0) scale(${w.toFixed(1)}, ${h.toFixed(1)})`);
     }
 
     // ---- beans ----
@@ -236,7 +253,7 @@ export function startHero(refs: HeroRefs, opts: { modelUrl: string | ArrayBuffer
 
       const rot = b.rot + (reduced ? 0 : Math.sin(t * 0.5 + b.phase) * 8) + p * 160 * Math.sign(depth || 1) + b.vx * 0.12;
       const scale = 1 + p * Math.max(0, depth) * 0.9;
-      b.el.style.transform = `translate3d(${(px + sx + b.ox).toFixed(2)}px, ${(py + sy + float + b.oy).toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+      setTransform(b.el, `translate3d(${(px + sx + b.ox).toFixed(2)}px, ${(py + sy + float + b.oy).toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`);
     }
 
     if (visible && !reduced) raf = requestAnimationFrame(frame);

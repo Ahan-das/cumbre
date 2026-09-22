@@ -463,3 +463,14 @@ button.btn { border: 0; font: inherit; cursor: pointer; }
 @media (max-height: 700px) and (min-width: 721px) {
   .hero__lead { display: none; }
 }
+
+/* ---- touch devices ----------------------------------------------------
+   Fifteen beans, each with a blur and a drop shadow, each moved every frame:
+   a filtered layer has to be re-rasterised whenever it moves, so on a phone
+   this cost more than the cup itself. The beans keep their depth from size
+   and opacity instead. */
+@media (hover: none), (max-width: 720px) {
+  .bean {
+    filter: none;
+  }
+}

@@ -5,6 +5,7 @@
  * the flavour.
  */
 import { createSnap, type Snap } from "@/lib/scrollSnap";
+import { setBox, setHidden, setOpacity, setTransform, setZ } from "@/lib/fastStyle";
 import { mixPalettes, type Palette } from "@/lib/palette";
 
 export type ScoopRefs = {
@@ -43,20 +44,40 @@ export function startScoops(
   const ptr = { tx: 0, ty: 0, x: 0, y: 0 };
   let W = 1, H = 1, phone = false;
 
+  let painted = 0;
+  // resize-time geometry: sizes cost a layout pass, so they never go in a frame
+  const g = { cx: 0, cy: 0, itemH: 0 };
+
   const measure = () => {
     const r = stage.getBoundingClientRect();
     W = r.width;
     H = r.height;
     phone = W <= 720;
+    g.cx = W * (phone ? 0.5 : 0.68);
+    g.cy = H * (phone ? 0.64 : 0.56);
+    g.itemH = H * (phone ? 0.4 : 0.56);
+    items.forEach((el) => setBox(el, null, g.itemH));
   };
   const readScroll = () => {
-    const r = root.getBoundingClientRect();
-    progTarget = clamp(-r.top / Math.max(1, r.height - window.innerHeight));
+    progTarget = snap.progress();
   };
 
   const frame = (now: number) => {
     raf = 0;
     if (disposed) return;
+    // resting on a phone: the drifting blobs read the same at half the rate
+    if (
+      phone &&
+      !reduced &&
+      now - painted < 32 &&
+      Math.abs(progTarget - prog) < 0.0004 &&
+      Math.abs(ptr.tx - ptr.x) < 0.002 &&
+      Math.abs(ptr.ty - ptr.y) < 0.002
+    ) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    painted = now;
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
     last = now;
     const t = (now - t0) / 1000;
@@ -73,13 +94,11 @@ export function startScoops(
       opts.onIndex(idx);
     }
 
-    const cx = W * (phone ? 0.5 : 0.68);
-    const cy = H * (phone ? 0.64 : 0.56);
-    const itemH = H * (phone ? 0.4 : 0.56);
+    const { cx, cy } = g;
     const between = Math.sin((pos - Math.floor(pos)) * Math.PI);
 
     // the melting lip at the top of the section sags a little between flavours
-    drip.style.transform = `translate3d(0, ${(between * 8).toFixed(2)}px, 0) scaleY(${(1 + between * 0.12).toFixed(3)})`;
+    setTransform(drip, `translate3d(0, ${(between * 8).toFixed(2)}px, 0) scaleY(${(1 + between * 0.12).toFixed(3)})`);
 
     for (let n = 0; n < N; n++) {
       const el = items[n];
@@ -104,13 +123,17 @@ export function startScoops(
       }
       const front = clamp(1 - Math.abs(d));
       const bob = reduced ? 0 : Math.sin(t * 1.2 + n) * 5 * (0.4 + front * 0.6);
-      el.style.height = `${(itemH * (1 - Math.max(0, -d) * 0.06)).toFixed(1)}px`;
-      el.style.transform =
+      // the stacked ones also shrink a little; that used to be a height write,
+      // which is a layout pass — folded into the scale it looks identical
+      const shrink = 1 - Math.max(0, -d) * 0.06;
+      setTransform(
+        el,
         `translate3d(${(x + ptr.x * 12 * front).toFixed(1)}px, ${(y + bob + ptr.y * 8 * front).toFixed(1)}px, 0) translate(-50%, -50%) ` +
-        `rotate(${(rot + (reduced ? 0 : Math.sin(t * 0.7 + n) * 1.5 * front)).toFixed(2)}deg) scale(${scale.toFixed(4)})`;
-      el.style.opacity = op.toFixed(3);
-      el.style.zIndex = String(z);
-      el.setAttribute("aria-hidden", Math.abs(d) > 0.5 ? "true" : "false");
+          `rotate(${(rot + (reduced ? 0 : Math.sin(t * 0.7 + n) * 1.5 * front)).toFixed(2)}deg) scale(${(scale * shrink).toFixed(4)})`,
+      );
+      setOpacity(el, op);
+      setZ(el, z);
+      setHidden(el, Math.abs(d) > 0.5);
     }
 
     // blobs: slow drift, a small swell when the flavour changes
@@ -120,7 +143,7 @@ export function startScoops(
       const dx = (reduced ? 0 : Math.sin(t * sp + i * 2.1) * amp) + ptr.x * (12 + i * 7);
       const dy = (reduced ? 0 : Math.cos(t * sp * 1.3 + i) * amp * 0.7) + ptr.y * (9 + i * 5);
       const s = 1 + between * 0.07 * (i % 2 ? 1 : -1);
-      b.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${((reduced ? 0 : t * (4 + i)) % 360).toFixed(2)}deg) scale(${s.toFixed(4)})`;
+      setTransform(b, `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${((reduced ? 0 : t * (4 + i)) % 360).toFixed(2)}deg) scale(${s.toFixed(4)})`);
     });
 
     // sprinkles: gentle tumble, and a scatter kick through the change
@@ -128,7 +151,7 @@ export function startScoops(
       const ph = i * 0.9;
       const dx = (reduced ? 0 : Math.sin(t * 0.5 + ph) * 10) + ptr.x * 18 * ((i % 3) - 1) * 0.5;
       const dy = (reduced ? 0 : Math.cos(t * 0.45 + ph) * 12) - between * 16 * (1 + (i % 3));
-      s.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${(i * 37 + (reduced ? 0 : t * 12 * (i % 2 ? 1 : -1))).toFixed(1)}deg) scale(${(1 + between * 0.25).toFixed(3)})`;
+      setTransform(s, `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) rotate(${(i * 37 + (reduced ? 0 : t * 12 * (i % 2 ? 1 : -1))).toFixed(1)}deg) scale(${(1 + between * 0.25).toFixed(3)})`);
     });
 
     if (visible && !reduced) raf = requestAnimationFrame(frame);

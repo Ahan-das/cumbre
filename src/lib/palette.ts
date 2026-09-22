@@ -36,10 +36,20 @@ export function mixPalettes(palettes: Palette[]) {
     return out;
   });
   const N = lab.length;
+  // A custom property write invalidates the style of everything below it, and
+  // this section's gradients and shadows are all color-mix() of these four. So
+  // quantise the position: 64 steps per item is finer than the eye can follow
+  // mid-blend, and it means a resting section writes nothing at all.
+  const STEPS = 64;
+  let lastStep = Number.NaN;
   return (style: CSSStyleDeclaration, pos: number) => {
-    const i0 = Math.max(0, Math.min(N - 1, Math.floor(pos)));
+    const step = Math.round(pos * STEPS);
+    if (step === lastStep) return;
+    lastStep = step;
+    const at = step / STEPS;
+    const i0 = Math.max(0, Math.min(N - 1, Math.floor(at)));
     const i1 = Math.min(N - 1, i0 + 1);
-    const raw = pos - i0;
+    const raw = at - i0;
     // a tighter blend keeps in-between tints brief, so a change reads as a wipe
     const t = Math.min(1, Math.max(0, (raw - 0.15) / 0.7));
     const f = t * t * (3 - 2 * t);

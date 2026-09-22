@@ -373,3 +373,15 @@
 @media (max-height: 720px) and (min-width: 721px) {
   .chapter__line { display: none; }
 }
+
+/* ---- touch devices ----------------------------------------------------
+   Same reasoning as the coffee chapter: these two are blurred layers that
+   move and scale every frame, so the blur is re-rasterised each time. */
+@media (hover: none), (max-width: 720px) {
+  .scoops__blob {
+    filter: none;
+  }
+  .shelf__sheen {
+    filter: none;
+  }
+}

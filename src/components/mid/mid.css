@@ -274,3 +274,34 @@
 @media (max-height: 720px) and (min-width: 721px) {
   .mid__line { display: none; }
 }
+
+/* ---- touch devices ----------------------------------------------------
+   The drinks and the orbs are re-scaled on every frame, and a filter or a
+   soft shadow on a scaling element has to be re-rasterised each time — on a
+   phone that alone costs more than the rest of the chapter put together.
+   The cup keeps its grounding from a gradient ellipse instead, which paints
+   once and rides along with the transform. */
+@media (hover: none), (max-width: 720px) {
+  .mid__drink {
+    filter: none;
+  }
+  .mid__drink::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 12%;
+    right: 12%;
+    bottom: -3%;
+    height: 8%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--m-ink) 30%, transparent), transparent);
+  }
+  .mid__orb--disc,
+  .mid__orb--solid {
+    box-shadow: none;
+  }
+  .mid__orb--solid::after {
+    /* the printed grain is a blend-mode layer over a scaling circle */
+    display: none;
+  }
+}

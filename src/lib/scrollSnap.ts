@@ -6,6 +6,8 @@
  *
  * Shared by every chapter of the site so they all feel the same.
  */
+import { measureSection, type SectionGeo } from "./fastStyle";
+
 export type SnapOptions = {
   root: HTMLElement;      // the tall section
   stage: HTMLElement;     // its sticky child (receives touch)
@@ -46,10 +48,24 @@ export function createSnap(opts: SnapOptions): Snap {
   const self = {};
   const busyElsewhere = () => inputLocked || (scrollOwner !== null && scrollOwner !== self);
 
+  /**
+   * Section geometry, measured once and kept until the page is laid out again.
+   * Wheel, touch, key and scroll handlers all need it, and measuring inside a
+   * scroll handler forces the browser to flush the layout the animation frame
+   * just wrote — the single most expensive thing in this file on a phone.
+   */
+  let cache: SectionGeo | null = null;
+  const invalidate = () => {
+    cache = null;
+  };
   const geo = () => {
-    const r = root.getBoundingClientRect();
-    const travel = Math.max(1, r.height - window.innerHeight);
-    return { top: window.scrollY + r.top, travel, pinned: r.top <= 1 && r.bottom >= window.innerHeight - 1 };
+    if (!cache) cache = measureSection(root);
+    const y = window.scrollY;
+    return {
+      top: cache.top,
+      travel: cache.travel,
+      pinned: y >= cache.top - 1 && y <= cache.top + cache.travel + 1,
+    };
   };
   const restY = (i: number) => {
     const g = geo();
@@ -225,6 +241,13 @@ export function createSnap(opts: SnapOptions): Snap {
     }
   };
 
+  // anything that can move the section in the document invalidates the cache
+  const ro = new ResizeObserver(invalidate);
+  ro.observe(root);
+  ro.observe(document.documentElement);
+  window.addEventListener("resize", invalidate, { passive: true });
+  window.addEventListener("orientationchange", invalidate, { passive: true });
+
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("wheel", onWheel, { passive: false });
   window.addEventListener("keydown", onKey);
@@ -239,6 +262,9 @@ export function createSnap(opts: SnapOptions): Snap {
       if (scrollOwner === self) scrollOwner = null;
       window.clearTimeout(gestureTimer);
       window.clearTimeout(settleTimer);
+      ro.disconnect();
+      window.removeEventListener("resize", invalidate);
+      window.removeEventListener("orientationchange", invalidate);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKey);
